@@ -14,17 +14,22 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
-import org.junit.Assert;
-import org.junit.Test;
 
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 
 // https://lucene.apache.org/core/7_3_1/core/index.html
-public class main {
+public class mainClass {
+
+    public static void indexing(){
+        System.out.print("function call test");
+    }
+
     public static void main(String[] args) throws IOException, ParseException {
         Analyzer analyzer = new StandardAnalyzer();
+
+        indexing();
 
         // Store the index in memory:
         Directory directory = new RAMDirectory();
@@ -56,4 +61,6 @@ public class main {
         directory.close();
 
     }
+
+
 }
