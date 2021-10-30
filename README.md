@@ -20,6 +20,3 @@ Adding jars using intelliJ:
  - JARs or directories
  - Select needed jar files
 
-```bash
-pip install foobar
-```

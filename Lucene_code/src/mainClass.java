@@ -29,14 +29,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
 
-import static org.junit.Assert.assertEquals;
+// Only use import below if junit is actually installed, might not be useful
+// import static org.junit.Assert.assertEquals;
 
 // https://lucene.apache.org/core/7_3_1/core/index.html
+// TODO: split up indexing/reading queries/querying into separate classes/files?
 public class mainClass {
 
     // https://zetcode.com/java/listdirectory/
     // Prints all files in directory
-    // This is just to manually check if the current directory is correct, should not be used in actual code
+    // This is just to manually check if the directory is correct, should not be used in actual code
     public static void testDirectory(Boolean largeDataset) throws IOException {
         String dirName = "./Datasets/Small";
         Files.list(new File(dirName).toPath())
@@ -94,10 +96,16 @@ public class mainClass {
     }
 
     // Instances of a class outside of methods need a bunch of keywords (static, final)?
-    // Not sure if this method will need any more code than just calling this, leaving it just in case
+    // Not sure if this method will need any more code than just calling readFiles, leaving it just in case
+    // Indexing results are written to the disk/RAM directory that the IndexWriter was told to use, so return
+    // value needed.
     public static void indexing(IndexWriter iwriter) throws IOException {
         // Read files and index them
         readFiles(iwriter, true);
+    }
+
+    public static void queryProcessing(){
+
     }
 
     public static void main(String[] args) throws IOException, ParseException {
@@ -105,6 +113,8 @@ public class mainClass {
         Directory directory = new RAMDirectory();
         // To store an index on disk, use this instead:
         //Directory directory = FSDirectory.open("/tmp/testindex");
+
+        // TODO: move the analyzer/index definitions below to the indexing() method?
 
         // https://lucene.apache.org/core/7_3_1/core/index.html
         // "Filters StandardTokenizer with StandardFilter, LowerCaseFilter and StopFilter, using a list of English stop words."
@@ -118,8 +128,6 @@ public class mainClass {
         indexing(iwriter);
         // Indexing finished -> close index writer
         iwriter.close();
-
-        // code from this point onwards is example code copied from the docs https://lucene.apache.org/core/7_3_1/core/index.html
 
         // Now search the index:
         // Open the directory where we stored the index
@@ -141,20 +149,21 @@ public class mainClass {
         // Apply analyzer to query, removing stop words etc depending on analyzer settings
         // QueryParser.escape Changes special characters so that they do not crash the query
         // https://stackoverflow.com/a/10259944
-        // TODO: using QueryParser.escape strongly increases the amount of results, should this happen?
+        // TODO: using QueryParser.escape strongly increases the amount of results, should this happen? Is it even
+        //  needed to do this, do any queries from the assignment crash if not escaped?
         Query query = parser.parse(QueryParser.escape(fileContent1537));
 
-        // Actually execute the query, limit shown results to 100
-        ScoreDoc[] hits = isearcher.search(query, 100, Sort.RELEVANCE).scoreDocs;
+        // Actually execute the query, limit shown results to 10
+        ScoreDoc[] hits = isearcher.search(query, 10, Sort.RELEVANCE).scoreDocs;
 
-        // example of how junit can be used to test results
+        // example of how junit can be used to test results (needs junit jar to be added to project)
         //assertEquals(1, hits.length);
 
         // Iterate through the results:
         for (int i = 0; i < hits.length; i++) {
             // Get one result
             Document hitDoc = isearcher.doc(hits[i].doc);
-            System.out.print("Rank number: "+ String.valueOf(i+1) +", Doc number: " + hitDoc.getField("file_number") + "\n");
+            System.out.print("Rank number: " + String.valueOf(i + 1) + ", Doc number: " + hitDoc.getField("file_number") + "\n");
             //System.out.print("Doc content: " + hitDoc.getField("file_content") + "\n");
         }
 
@@ -162,31 +171,4 @@ public class mainClass {
         directory.close();
 
     }
-
-    /*
-    // https://www.baeldung.com/lucene-file-search
-    public void addFileToIndex(String filepath) throws IOException {
-
-        Path path = Paths.get(filepath);
-        File file = path.toFile();
-        IndexWriterConfig indexWriterConfig
-                = new IndexWriterConfig(analyzer);
-        Directory indexDirectory = FSDirectory
-                .open(Paths.get(""));
-        IndexWriter indexWriter = new IndexWriter(
-                indexDirectory, indexWriterConfig);
-        Document document = new Document();
-
-        FileReader fileReader = new FileReader(file);
-        document.add(
-                new TextField("contents", fileReader));
-        document.add(
-                new StringField("path", file.getPath(), Field.Store.YES));
-        document.add(
-                new StringField("filename", file.getName(), Field.Store.YES));
-
-        indexWriter.addDocument(document);
-        indexWriter.close();
-    }
-*/
 }
