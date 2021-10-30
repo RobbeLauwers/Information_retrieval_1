@@ -2,7 +2,6 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
@@ -14,20 +13,16 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.RAMDirectory;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.junit.Assert.assertEquals;
 
 // https://lucene.apache.org/core/7_3_1/core/index.html
-public class mainClass {
+public class documentationExample {
 
     // https://zetcode.com/java/listdirectory/
     // Prints all files in directory
@@ -82,8 +77,8 @@ public class mainClass {
 
     public static void main(String[] args) throws IOException, ParseException {
         Analyzer analyzer = new StandardAnalyzer();
-        testDirectory();
-        indexing();
+        //testDirectory();
+        //indexing();
 
         // Store the index in memory:
         Directory directory = new RAMDirectory();
