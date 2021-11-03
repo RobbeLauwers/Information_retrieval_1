@@ -19,8 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
-import static org.junit.Assert.assertEquals;
-
 // https://lucene.apache.org/core/7_3_1/core/index.html
 public class documentationExample {
 
@@ -99,11 +97,9 @@ public class documentationExample {
         QueryParser parser = new QueryParser("fieldname", analyzer);
         Query query = parser.parse("text");
         ScoreDoc[] hits = isearcher.search(query, 1000, Sort.RELEVANCE).scoreDocs;
-        assertEquals(1, hits.length);
         // Iterate through the results:
         for (int i = 0; i < hits.length; i++) {
             Document hitDoc = isearcher.doc(hits[i].doc);
-            assertEquals("This is the text to be indexed.", hitDoc.get("fieldname"));
         }
 
         ireader.close();
