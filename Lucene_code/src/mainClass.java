@@ -31,7 +31,8 @@ import java.util.stream.Stream;
 // TODO: split up indexing/reading queries/querying into separate classes/files?
 public class mainClass {
 
-    // If you want the path to be realtive to root directory, remember to use ./ at the start
+    // If you want the path to be relative to root directory, remember to use ./ at the start
+    //TODO: give these as actual arguments rather than hardcoded?
     static String DATASET_DIRECTORY_PATH = "./Datasets/Small";
     static String QUERY_FILE_PATH = "./Queries/dev_small_queries.tsv";
     static Boolean QUERY_IS_CSV = false;
@@ -160,9 +161,6 @@ public class mainClass {
             directory = FSDirectory.open(Paths.get(INDEX_LOCATION_IF_ON_DISK));
         }
 
-        // To store an index on disk, use this instead:
-
-
         // TODO: move the analyzer/index definitions below to the indexing() method?
 
         // https://lucene.apache.org/core/7_3_1/core/index.html
@@ -237,6 +235,7 @@ public class mainClass {
         }
 
         // Write output
+        System.out.print("Output written to ./result.csv\n");
         givenDataArray_whenConvertToCSV_thenOutputCreated("./result.csv",QueryNrResultNr);
 
         ireader.close();
