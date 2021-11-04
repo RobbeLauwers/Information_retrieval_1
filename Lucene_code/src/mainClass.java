@@ -81,7 +81,6 @@ public class mainClass {
                             // Initialize file contents
                             String content = "";
 
-                            //TODO: verwijder
                             if (iwriter.numDocs()%10000 == 0){
                                 System.out.print("Indexed " + iwriter.numDocs() + " files, time since last update: " + (-TimeSincePrevIndex +System.currentTimeMillis()) + "\n");
                                 TimeSincePrevIndex = System.currentTimeMillis();
@@ -207,8 +206,7 @@ public class mainClass {
             // Apply analyzer to query, removing stop words etc depending on analyzer settings
             // QueryParser.escape Changes special characters so that they do not crash the query
             // https://stackoverflow.com/a/10259944
-            // TODO: using QueryParser.escape strongly increases the amount of results, should this happen? Is it even
-            //  needed to do this, do any queries from the assignment crash if not escaped?
+            // TODO: using QueryParser.escape strongly increases the amount of results, should this happen?
             Query query = parser.parse(QueryParser.escape(queryRow[1]));
 
             // Show progress
