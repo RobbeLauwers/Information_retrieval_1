@@ -14,6 +14,7 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.store.RAMDirectory;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -29,6 +30,16 @@ import java.util.stream.Stream;
 // https://lucene.apache.org/core/7_3_1/core/index.html
 // TODO: split up indexing/reading queries/querying into separate classes/files?
 public class mainClass {
+
+    // If you want the path to be realtive to root directory, remember to use ./ at the start
+    static String DATASET_DIRECTORY_PATH = "./Datasets/Small";
+    static String QUERY_FILE_PATH = "./Queries/dev_small_queries.tsv";
+    static Boolean QUERY_IS_CSV = false;
+    static Boolean INDEX_LOCATION_IN_RAM = true;
+    static String INDEX_LOCATION_IF_ON_DISK = "./tmp/testindex2";
+    static int LIMIT_SEARCH_RESULT_PER_QUERY = 1;
+
+    // Timers used to give progress updates, initial values set at start of indexing
     public static long startOfProgram;
     public static long TimeSincePrevIndex;
 
@@ -50,33 +61,15 @@ public class mainClass {
     }
 
     // https://zetcode.com/java/listdirectory/
-    // Prints all files in directory
-    // This is just to manually check if the directory is correct, should not be used in actual code
-    public static void testDirectory(Boolean largeDataset) throws IOException {
-        String dirName = "./Datasets/Small";
-        Files.list(new File(dirName).toPath())
-                .forEach(System.out::println);
-    }
-
-    // https://zetcode.com/java/listdirectory/
     // Indexes all documents
-    public static void readFiles(IndexWriter iwriter, Boolean smallDataset) throws IOException {
-        //Select dataset
-        String dirName = "";
-        if (smallDataset) {
-            dirName = "./Datasets/Small";
-        } else {
-            dirName = "./Datasets/Large";
-        }
+    public static void readFiles(IndexWriter iwriter, String datasetDir) throws IOException {
 
-        //TODO verwijder
-        dirName = "./Datasets/Large/full_docs/full_docs";
-
+        // Timers to give progress updates
         startOfProgram = System.currentTimeMillis();
         TimeSincePrevIndex = System.currentTimeMillis();
 
         //For each file in dataset
-        Files.list(new File(dirName).toPath())
+        Files.list(new File(datasetDir).toPath())
                 //Get the path to the file
                 .forEach(path -> {
                             //Create a new document to index
@@ -128,18 +121,25 @@ public class mainClass {
     // value needed.
     public static void indexing(IndexWriter iwriter) throws IOException {
         // Read files and index them
-        readFiles(iwriter, true);
+        readFiles(iwriter, DATASET_DIRECTORY_PATH);
     }
 
     // Parse .tsv files (queries)
     // Return format: data.get(x) gets row x, data.get(x)[0] gets query number, data.get(x)[1] gets query
     // https://stackoverflow.com/a/61443651
-    public static ArrayList<String[]> tsvr(File test2) {
+    // TODO: make tsvr itself check the file extension instead of giving as argument
+    public static ArrayList<String[]> tsvr(File test2, Boolean csv) {
         ArrayList<String[]> Data = new ArrayList<>(); //initializing a new ArrayList out of String[]'s
         try (BufferedReader TSVReader = new BufferedReader(new FileReader(test2))) {
             String line = null;
             while ((line = TSVReader.readLine()) != null) {
-                String[] lineItems = line.split("\t"); //splitting the line and adding its items in String[]
+                String[] lineItems;
+                //splitting the line and adding its items in String[]
+                if (csv){
+                    lineItems = line.split(",");
+                }else{
+                    lineItems = line.split("\t");
+                }
                 Data.add(lineItems); //adding the splitted line array to the ArrayList
             }
             // Remove header row
@@ -152,10 +152,16 @@ public class mainClass {
 
     public static void main(String[] args) throws IOException, ParseException {
 
+        Directory directory;
         // Store the index in memory:
-        //Directory directory = new RAMDirectory();
+        if(INDEX_LOCATION_IN_RAM){
+            directory = new RAMDirectory();
+        }else{
+            directory = FSDirectory.open(Paths.get(INDEX_LOCATION_IF_ON_DISK));
+        }
+
         // To store an index on disk, use this instead:
-        Directory directory = FSDirectory.open(Paths.get("./tmp/testindex"));
+
 
         // TODO: move the analyzer/index definitions below to the indexing() method?
 
@@ -172,7 +178,7 @@ public class mainClass {
         // Indexing finished -> close index writer
         iwriter.close();
 
-        System.out.print("Indexing took " + (-startOfProgram + System.currentTimeMillis()));
+        System.out.print("Indexing took " + (-startOfProgram + System.currentTimeMillis() + "\n"));
 
         // Now search the index:
         // Open the directory where we stored the index
@@ -181,9 +187,10 @@ public class mainClass {
         IndexSearcher isearcher = new IndexSearcher(ireader);
 
         // read query file from path
-        File queryFile = new File("./Queries/dev_queries.tsv");
+        File queryFile = new File(QUERY_FILE_PATH);
         // Parse queries: queries.get(x) gets row x, queries.get(x)[0] gets query number, queries.get(x)[1] gets query
-        ArrayList<String[]> queries = tsvr(queryFile);
+        //TODO: make tsvr itself check the file extension
+        ArrayList<String[]> queries = tsvr(queryFile,QUERY_IS_CSV);
 
         // "file_content" is the name of the field we want to search. It is defined like this during index creation (see method readFiles)
         // Currently, we use the same analyzer that was used to create the index (remove/keep stop words from query, etc), probably possible to use a different one
@@ -206,13 +213,14 @@ public class mainClass {
             //  needed to do this, do any queries from the assignment crash if not escaped?
             Query query = parser.parse(QueryParser.escape(queryRow[1]));
 
+            // Show progress
             counter += 1;
             if ((counter % 100) == 0){
                 System.out.print("Running query " + counter + "\n");
             }
 
-            // Actually run the query, limit shown results to 20
-            ScoreDoc[] hits = isearcher.search(query, 20, Sort.RELEVANCE).scoreDocs;
+            // Actually run the query, limit shown results
+            ScoreDoc[] hits = isearcher.search(query, LIMIT_SEARCH_RESULT_PER_QUERY, Sort.RELEVANCE).scoreDocs;
 
             // Iterate through the results:
             for (int i = 0; i < hits.length; i++) {
@@ -222,12 +230,14 @@ public class mainClass {
                 //Add to "csv" to be written to output
                 QueryNrResultNr.add(new String[]{queryRow[0], hitDoc.getField("file_number").stringValue()});
 
-                // System.out.print("Rank number: " + String.valueOf(i + 1) + ", Doc number: " + hitDoc.getField("file_number") + "\n");
+                // Examples of ScoreDoc usage
+                //System.out.print("Rank number: " + String.valueOf(i + 1) + ", Doc number: " + hitDoc.getField("file_number") + "\n");
                 //System.out.print("Doc content: " + hitDoc.getField("file_content") + "\n");
             }
         }
 
-        givenDataArray_whenConvertToCSV_thenOutputCreated("result.csv",QueryNrResultNr);
+        // Write output
+        givenDataArray_whenConvertToCSV_thenOutputCreated("./result.csv",QueryNrResultNr);
 
         ireader.close();
         directory.close();
