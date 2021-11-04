@@ -20,6 +20,8 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Objects;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -39,6 +41,8 @@ public class mainClass {
     static Boolean INDEX_LOCATION_IN_RAM = true;
     static String INDEX_LOCATION_IF_ON_DISK = "./tmp/testindex2";
     static int LIMIT_SEARCH_RESULT_PER_QUERY = 1;
+    static Boolean COMPARE_RESULTS_TO_EXAMPLE = true;
+    static String EXAMPLE_PATH = "./Queries/dev_query_results_small.csv";
 
     // Timers used to give progress updates, initial values set at start of indexing
     public static long startOfProgram;
@@ -150,6 +154,41 @@ public class mainClass {
         return Data;
     }
 
+    // TODO: expand for big dataset
+    public static void compareResults(ArrayList<String[]> results){
+        ArrayList<String[]> example = tsvr(new File(EXAMPLE_PATH),true);
+
+        HashMap<String, Integer> countExample = new HashMap<>();
+        for (String[] row : example){
+            if (!countExample.containsKey(row[0])){
+                countExample.put(row[0],1);
+            }else{
+                countExample.put(row[0],countExample.get(row[0])+1);
+                System.out.print("Query " + row[0] + " has " + countExample.get(row[0]).toString() + " results\n");
+            }
+        }
+        HashMap<String, String> mapExample = new HashMap<>();
+        for (String[] row : example){
+            if(countExample.get(row[0]) == 1){
+                mapExample.put(row[0],row[1]);
+            }
+        }
+        int errors = 0;
+        for(String[] row : results){
+            if(countExample.containsKey(row[0])){
+                if(!Objects.equals(row[1], mapExample.get(row[0]))){
+                    errors += 1;
+                }
+            }
+        }
+        System.out.print("Small dataset: " + Integer.toString(errors) + " queries do not match\n");
+    }
+
+    public static void compareResultsSmall(ArrayList<String[]> results){
+
+    }
+
+
     public static void main(String[] args) throws IOException, ParseException {
 
         Directory directory;
@@ -168,7 +207,7 @@ public class mainClass {
 
         // We want the index to be constructed using the analyzer defined above
         IndexWriterConfig config = new IndexWriterConfig(analyzer);
-        // We tell the index writer where to write to (directory) and give it additional settings like ignoring stop wrods (config)
+        // We tell the index writer where to write to (directory) and give it additional settings like ignoring stop words (config)
         IndexWriter iwriter = new IndexWriter(directory, config);
         // Actually run the indexer
         indexing(iwriter);
@@ -230,6 +269,10 @@ public class mainClass {
                 //System.out.print("Rank number: " + String.valueOf(i + 1) + ", Doc number: " + hitDoc.getField("file_number") + "\n");
                 //System.out.print("Doc content: " + hitDoc.getField("file_content") + "\n");
             }
+        }
+
+        if(COMPARE_RESULTS_TO_EXAMPLE){
+            compareResults(QueryNrResultNr);
         }
 
         // Write output
