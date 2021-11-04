@@ -2,7 +2,6 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
@@ -15,17 +14,14 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.store.RAMDirectory;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import java.util.Scanner;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 // Only use import below if junit is actually installed, might not be useful
 // import static org.junit.Assert.assertEquals;
@@ -33,8 +29,25 @@ import java.util.stream.Collectors;
 // https://lucene.apache.org/core/7_3_1/core/index.html
 // TODO: split up indexing/reading queries/querying into separate classes/files?
 public class mainClass {
-    public static long start;
-    public static long startTime;
+    public static long startOfProgram;
+    public static long TimeSincePrevIndex;
+
+    // https://www.baeldung.com/java-csv
+    // Helper function to write output
+    public static String convertToCSV(String[] data) {
+        return String.join(",", data);
+    }
+
+    // https://www.baeldung.com/java-csv
+    // prints output to csv
+    public static void givenDataArray_whenConvertToCSV_thenOutputCreated(String CSV_FILE_NAME, ArrayList<String[]> dataLines) throws IOException {
+        File csvOutputFile = new File(CSV_FILE_NAME);
+        try (PrintWriter pw = new PrintWriter(csvOutputFile)) {
+            dataLines.stream()
+                    .map(mainClass::convertToCSV)
+                    .forEach(pw::println);
+        }
+    }
 
     // https://zetcode.com/java/listdirectory/
     // Prints all files in directory
@@ -59,8 +72,8 @@ public class mainClass {
         //TODO verwijder
         dirName = "./Datasets/Large/full_docs/full_docs";
 
-        start = System.currentTimeMillis();
-        startTime = System.currentTimeMillis();
+        startOfProgram = System.currentTimeMillis();
+        TimeSincePrevIndex = System.currentTimeMillis();
 
         //For each file in dataset
         Files.list(new File(dirName).toPath())
@@ -76,8 +89,8 @@ public class mainClass {
 
                             //TODO: verwijder
                             if (iwriter.numDocs()%10000 == 0){
-                                System.out.print("Indexed " + iwriter.numDocs() + " files, time since last update: " + (-startTime+System.currentTimeMillis()) + "\n");
-                                startTime = System.currentTimeMillis();
+                                System.out.print("Indexed " + iwriter.numDocs() + " files, time since last update: " + (-TimeSincePrevIndex +System.currentTimeMillis()) + "\n");
+                                TimeSincePrevIndex = System.currentTimeMillis();
                             }
 
                             // Exception handling seems to be mandatory?
@@ -159,7 +172,7 @@ public class mainClass {
         // Indexing finished -> close index writer
         iwriter.close();
 
-        System.out.print("Indexing took " + (-start + System.currentTimeMillis()));
+        System.out.print("Indexing took " + (-startOfProgram + System.currentTimeMillis()));
 
         // Now search the index:
         // Open the directory where we stored the index
@@ -176,9 +189,15 @@ public class mainClass {
         // Currently, we use the same analyzer that was used to create the index (remove/keep stop words from query, etc), probably possible to use a different one
         QueryParser parser = new QueryParser("file_content", analyzer);
 
+        //Used to give progress updates during querying
         int counter = 0;
 
-        // Reminder: query[0] gets query number, query[1] gets query
+        //Results will be here
+        ArrayList<String[]> QueryNrResultNr = new ArrayList<String[]>();
+        // Header required in output
+        QueryNrResultNr.add(new String[]{"Query_number", "Document_number"});
+
+        // Reminder: queryRow[0] gets query number, queryRow[1] gets query
         for ( String[] queryRow : queries){
             // Apply analyzer to query, removing stop words etc depending on analyzer settings
             // QueryParser.escape Changes special characters so that they do not crash the query
@@ -192,20 +211,23 @@ public class mainClass {
                 System.out.print("Running query " + counter + "\n");
             }
 
-            // Actually run the query, limit shown results to 10
-            ScoreDoc[] hits = isearcher.search(query, 10, Sort.RELEVANCE).scoreDocs;
+            // Actually run the query, limit shown results to 20
+            ScoreDoc[] hits = isearcher.search(query, 20, Sort.RELEVANCE).scoreDocs;
 
             // Iterate through the results:
             for (int i = 0; i < hits.length; i++) {
                 // Get one result
                 Document hitDoc = isearcher.doc(hits[i].doc);
 
+                //Add to "csv" to be written to output
+                QueryNrResultNr.add(new String[]{queryRow[0], hitDoc.getField("file_number").stringValue()});
+
                 // System.out.print("Rank number: " + String.valueOf(i + 1) + ", Doc number: " + hitDoc.getField("file_number") + "\n");
                 //System.out.print("Doc content: " + hitDoc.getField("file_content") + "\n");
             }
         }
 
-
+        givenDataArray_whenConvertToCSV_thenOutputCreated("result.csv",QueryNrResultNr);
 
         ireader.close();
         directory.close();
