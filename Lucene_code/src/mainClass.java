@@ -12,17 +12,16 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.similarities.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.RAMDirectory;
+import org.apache.lucene.util.BytesRef;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Objects;
-import java.util.Scanner;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -40,7 +39,7 @@ public class mainClass {
     static Boolean QUERY_IS_CSV = false;
     static Boolean INDEX_LOCATION_IN_RAM = true;
     static String INDEX_LOCATION_IF_ON_DISK = "./tmp/testindex2";
-    static int LIMIT_SEARCH_RESULT_PER_QUERY = 1;
+    static int LIMIT_SEARCH_RESULT_PER_QUERY = 100;
     static Boolean COMPARE_RESULTS_TO_EXAMPLE = true;
     static String EXAMPLE_PATH = "./Queries/dev_query_results_small.csv";
 
@@ -155,33 +154,61 @@ public class mainClass {
     }
 
     // TODO: expand for big dataset
-    public static void compareResults(ArrayList<String[]> results){
+    public static void compareResults(ArrayList<String[]> results, Boolean resultNotInExample){
+        //Reads example results from csv
         ArrayList<String[]> example = tsvr(new File(EXAMPLE_PATH),true);
 
-        HashMap<String, Integer> countExample = new HashMap<>();
-        for (String[] row : example){
-            if (!countExample.containsKey(row[0])){
-                countExample.put(row[0],1);
-            }else{
-                countExample.put(row[0],countExample.get(row[0])+1);
-                System.out.print("Query " + row[0] + " has " + countExample.get(row[0]).toString() + " results\n");
-            }
-        }
-        HashMap<String, String> mapExample = new HashMap<>();
-        for (String[] row : example){
-            if(countExample.get(row[0]) == 1){
-                mapExample.put(row[0],row[1]);
-            }
-        }
-        int errors = 0;
-        for(String[] row : results){
-            if(countExample.containsKey(row[0])){
-                if(!Objects.equals(row[1], mapExample.get(row[0]))){
-                    errors += 1;
+        if(resultNotInExample){
+            //Key: query number, value: document numbers
+            HashMap<String, ArrayList<String>> mapExample = new HashMap<>();
+            //For each row from table [querynumber,documentnumber]
+            for (String[] row : example){
+                //If key (query number) is not yet present
+                if(!mapExample.containsKey(row[0])){
+                    //Add query number and document number
+                    mapExample.put(row[0], new ArrayList<String>(Collections.singleton(row[1])));
+                }else{
+                    //If key did exist, add document
+                    ArrayList<String> temp = mapExample.get(row[0]);
+                    temp.add(row[1]);
+                    mapExample.put(row[0],temp);
                 }
             }
+            int error2 = 0;
+            for (String[] row : results){
+                if(!mapExample.containsKey(row[0])){
+                    error2 += 1;
+                    continue;
+                }
+                if(!mapExample.get(row[0]).contains(row[1])){
+                    error2 += 1;
+                }
+            }
+            System.out.print("There are " + error2 + " actual query results that do not show up in the examples\n");
+        }else{
+            //same as above, but for actual results
+            HashMap<String, ArrayList<String>> mapResult = new HashMap<>();
+            for (String[] row : results){
+                if(!mapResult.containsKey(row[0])){
+                    mapResult.put(row[0], new ArrayList<String>(Collections.singleton(row[1])));
+                }else{
+                    ArrayList<String> temp = mapResult.get(row[0]);
+                    temp.add(row[1]);
+                    mapResult.put(row[0],temp );
+                }
+            }
+            int error = 0;
+            for (String[] row : example){
+                if(!mapResult.containsKey(row[0])){
+                    error += 1;
+                    continue;
+                }
+                if(!mapResult.get(row[0]).contains(row[1])){
+                    error += 1;
+                }
+            }
+            System.out.print("There are " + error + " example query results that do not show up in the results\n");
         }
-        System.out.print("Small dataset: " + Integer.toString(errors) + " queries do not match\n");
     }
 
     public static void compareResultsSmall(ArrayList<String[]> results){
@@ -207,6 +234,11 @@ public class mainClass {
 
         // We want the index to be constructed using the analyzer defined above
         IndexWriterConfig config = new IndexWriterConfig(analyzer);
+
+        //TODO
+        Similarity similarity = new ClassicSimilarity();
+        //config.setSimilarity(similarity);
+
         // We tell the index writer where to write to (directory) and give it additional settings like ignoring stop words (config)
         IndexWriter iwriter = new IndexWriter(directory, config);
         // Actually run the indexer
@@ -221,6 +253,9 @@ public class mainClass {
         DirectoryReader ireader = DirectoryReader.open(directory);
         // We want to search in the index we just read
         IndexSearcher isearcher = new IndexSearcher(ireader);
+
+        // TODO
+        //isearcher.setSimilarity(similarity);
 
         // read query file from path
         File queryFile = new File(QUERY_FILE_PATH);
@@ -272,7 +307,7 @@ public class mainClass {
         }
 
         if(COMPARE_RESULTS_TO_EXAMPLE){
-            compareResults(QueryNrResultNr);
+            compareResults(QueryNrResultNr,false);
         }
 
         // Write output
