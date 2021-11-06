@@ -1,5 +1,12 @@
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.StopwordAnalyzerBase;
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
+import org.apache.lucene.analysis.core.StopAnalyzer;
+import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
+import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.StopFilter;
+import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.TextField;
@@ -39,7 +46,7 @@ public class mainClass {
     static Boolean QUERY_IS_CSV = false;
     static Boolean INDEX_LOCATION_IN_RAM = true;
     static String INDEX_LOCATION_IF_ON_DISK = "./tmp/testindex2";
-    static int LIMIT_SEARCH_RESULT_PER_QUERY = 100;
+    static int LIMIT_SEARCH_RESULT_PER_QUERY = 1;
     static Boolean COMPARE_RESULTS_TO_EXAMPLE = true;
     static String EXAMPLE_PATH = "./Queries/dev_query_results_small.csv";
 
@@ -211,10 +218,6 @@ public class mainClass {
         }
     }
 
-    public static void compareResultsSmall(ArrayList<String[]> results){
-
-    }
-
 
     public static void main(String[] args) throws IOException, ParseException {
 
@@ -230,14 +233,15 @@ public class mainClass {
 
         // https://lucene.apache.org/core/7_3_1/core/index.html
         // "Filters StandardTokenizer with StandardFilter, LowerCaseFilter and StopFilter, using a list of English stop words."
-        Analyzer analyzer = new StandardAnalyzer();
+        Analyzer analyzer = new EnglishAnalyzer();
 
         // We want the index to be constructed using the analyzer defined above
         IndexWriterConfig config = new IndexWriterConfig(analyzer);
 
         //TODO
-        Similarity similarity = new ClassicSimilarity();
-        //config.setSimilarity(similarity);
+        IndependenceChiSquared ind = new IndependenceChiSquared();
+        Similarity similarity = new DFISimilarity(ind);
+        config.setSimilarity(similarity);
 
         // We tell the index writer where to write to (directory) and give it additional settings like ignoring stop words (config)
         IndexWriter iwriter = new IndexWriter(directory, config);
@@ -255,7 +259,7 @@ public class mainClass {
         IndexSearcher isearcher = new IndexSearcher(ireader);
 
         // TODO
-        //isearcher.setSimilarity(similarity);
+        isearcher.setSimilarity(similarity);
 
         // read query file from path
         File queryFile = new File(QUERY_FILE_PATH);

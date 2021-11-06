@@ -1,0 +1,11 @@
+Using small dataset, limiting results to 1:
+    using default similarity (BM25?), sort by relevance
+        Trying to choose analyzer (index and query), amount of docs in example not in results:
+            standard: 61
+            stop: 57
+            whitespace: 125
+            english: 36
+
+English analyzer, chi squared similarity: 47
+
+Looking at https://lucene.apache.org/core/6_1_0/core/org/apache/lucene/document/Field.html, textField seems like the only field we should use
