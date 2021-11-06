@@ -1,5 +1,5 @@
 Using small dataset, limiting results to 1:
-    using default similarity (BM25?), sort by relevance
+    using default similarity (BM25 https://lucene.apache.org/core/7_3_0/core/org/apache/lucene/search/similarities/Similarity.html), sort by relevance
         Trying to choose analyzer (index and query), amount of docs in example not in results:
             standard: 61
             stop: 57
@@ -9,3 +9,5 @@ Using small dataset, limiting results to 1:
 English analyzer, chi squared similarity: 47
 
 Looking at https://lucene.apache.org/core/6_1_0/core/org/apache/lucene/document/Field.html, textField seems like the only field we should use
+
+Query parsing: https://lucene.apache.org/core/7_3_0/queryparser/org/apache/lucene/queryparser/classic/QueryParser.html: queries are natural language, and separate queries are given. Most functionality not needed

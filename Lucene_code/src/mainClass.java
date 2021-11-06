@@ -10,15 +10,10 @@ import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.TextField;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.*;
 import org.apache.lucene.search.similarities.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
@@ -32,13 +27,13 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+
 // Only use import below if junit is actually installed, might not be useful
 // import static org.junit.Assert.assertEquals;
 
 // https://lucene.apache.org/core/7_3_1/core/index.html
 // TODO: split up indexing/reading queries/querying into separate classes/files?
 public class mainClass {
-
     // If you want the path to be relative to root directory, remember to use ./ at the start
     //TODO: give these as actual arguments rather than hardcoded?
     static String DATASET_DIRECTORY_PATH = "./Datasets/Small";
@@ -221,6 +216,9 @@ public class mainClass {
 
     public static void main(String[] args) throws IOException, ParseException {
 
+        tf_idf TF_TEMP = new tf_idf();
+        float test = TF_TEMP.tf(1);
+
         Directory directory;
         // Store the index in memory:
         if(INDEX_LOCATION_IN_RAM){
@@ -240,7 +238,7 @@ public class mainClass {
 
         //TODO
         IndependenceChiSquared ind = new IndependenceChiSquared();
-        Similarity similarity = new DFISimilarity(ind);
+        Similarity similarity = new BM25Similarity();
         config.setSimilarity(similarity);
 
         // We tell the index writer where to write to (directory) and give it additional settings like ignoring stop words (config)
@@ -270,6 +268,8 @@ public class mainClass {
         // "file_content" is the name of the field we want to search. It is defined like this during index creation (see method readFiles)
         // Currently, we use the same analyzer that was used to create the index (remove/keep stop words from query, etc), probably possible to use a different one
         QueryParser parser = new QueryParser("file_content", analyzer);
+        parser.setSplitOnWhitespace(true);
+
 
         //Used to give progress updates during querying
         int counter = 0;
