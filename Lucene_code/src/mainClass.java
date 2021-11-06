@@ -86,10 +86,11 @@ public class mainClass {
                             // Initialize file contents
                             String content = "";
 
-                            if (iwriter.numDocs()%10000 == 0){
-                                System.out.print("Indexed " + iwriter.numDocs() + " files, time since last update: " + (-TimeSincePrevIndex +System.currentTimeMillis()) + "\n");
-                                TimeSincePrevIndex = System.currentTimeMillis();
-                            }
+                            //TODO keep for large dataset
+//                            if (iwriter.numDocs()%10000 == 0){
+//                                System.out.print("Indexed " + iwriter.numDocs() + " files, time since last update: " + (-TimeSincePrevIndex +System.currentTimeMillis()) + "\n");
+//                                TimeSincePrevIndex = System.currentTimeMillis();
+//                            }
 
                             // Exception handling seems to be mandatory?
                             try {
@@ -156,9 +157,11 @@ public class mainClass {
     }
 
     // TODO: expand for big dataset
-    public static void compareResults(ArrayList<String[]> results, Boolean resultNotInExample){
+    public static int compareResults(ArrayList<String[]> results, Boolean resultNotInExample){
         //Reads example results from csv
         ArrayList<String[]> example = tsvr(new File(EXAMPLE_PATH),true);
+
+        int errors = 0;
 
         if(resultNotInExample){
             //Key: query number, value: document numbers
@@ -186,6 +189,7 @@ public class mainClass {
                     error2 += 1;
                 }
             }
+            errors = error2;
             System.out.print("There are " + error2 + " actual query results that do not show up in the examples\n");
         }else{
             //same as above, but for actual results
@@ -209,15 +213,67 @@ public class mainClass {
                     error += 1;
                 }
             }
+            errors = error;
             System.out.print("There are " + error + " example query results that do not show up in the results\n");
+        }
+        return errors;
+    }
+
+    public static void runAllTF_IDF() throws IOException, ParseException {
+        tf_idf TF_TEMP = new tf_idf();
+        // https://www.techiedelight.com/iterate-over-characters-string-java/
+        for (int idf_int = 0; idf_int < TF_TEMP.validIDF.length(); idf_int++) {
+            TF_TEMP.idf = String.valueOf(TF_TEMP.validIDF.charAt(idf_int));
+            for (int tf_int = 0; tf_int < TF_TEMP.validTF.length(); tf_int++) {
+                TF_TEMP.tf = String.valueOf(TF_TEMP.validTF.charAt(tf_int));
+                for (int norm_int = 0; norm_int < TF_TEMP.validNorm.length(); norm_int++) {
+                    TF_TEMP.norm = String.valueOf(TF_TEMP.validNorm.charAt(norm_int));
+                    String name =  TF_TEMP.tf + TF_TEMP.idf + TF_TEMP.norm;
+                    Similarity similarity = new TFIDFSimilarity() {
+                        @Override
+                        public float tf(float v) {
+                            return TF_TEMP.tf(v);
+                        }
+
+                        @Override
+                        public float idf(long l, long l1) {
+                            return TF_TEMP.idf(l,l1);
+                        }
+
+                        @Override
+                        public float lengthNorm(int i) {
+                            return TF_TEMP.norm(i);
+                        }
+
+                        @Override
+                        public float sloppyFreq(int i) {
+                            return 0;
+                        }
+
+                        @Override
+                        public float scorePayload(int i, int i1, int i2, BytesRef bytesRef) {
+                            return 0;
+                        }
+                    };
+                    System.out.print("tf_idf using " + name + "." + name + "\n");
+                    fullSearch(similarity);
+                }
+            }
         }
     }
 
-
     public static void main(String[] args) throws IOException, ParseException {
 
-        tf_idf TF_TEMP = new tf_idf();
-        float test = TF_TEMP.tf(1);
+        System.out.print("Using BM25\n");
+        Similarity default_sim = new BM25Similarity();
+        fullSearch(default_sim);
+
+        runAllTF_IDF();
+
+    }
+
+    public static void fullSearch(Similarity similarity) throws IOException, ParseException {
+
 
         Directory directory;
         // Store the index in memory:
@@ -236,9 +292,6 @@ public class mainClass {
         // We want the index to be constructed using the analyzer defined above
         IndexWriterConfig config = new IndexWriterConfig(analyzer);
 
-        //TODO
-        IndependenceChiSquared ind = new IndependenceChiSquared();
-        Similarity similarity = new BM25Similarity();
         config.setSimilarity(similarity);
 
         // We tell the index writer where to write to (directory) and give it additional settings like ignoring stop words (config)
@@ -288,10 +341,10 @@ public class mainClass {
             Query query = parser.parse(QueryParser.escape(queryRow[1]));
 
             // Show progress
-            counter += 1;
-            if ((counter % 100) == 0){
-                System.out.print("Running query " + counter + "\n");
-            }
+//            counter += 1;
+//            if ((counter % 100) == 0){
+//                System.out.print("Running query " + counter + "\n");
+//            }
 
             // Actually run the query, limit shown results
             ScoreDoc[] hits = isearcher.search(query, LIMIT_SEARCH_RESULT_PER_QUERY, Sort.RELEVANCE).scoreDocs;
@@ -315,7 +368,8 @@ public class mainClass {
         }
 
         // Write output
-        System.out.print("Output written to ./result.csv\n");
+        //System.out.print("Output written to ./result.csv\n");
+        System.out.print("\n");
         givenDataArray_whenConvertToCSV_thenOutputCreated("./result.csv",QueryNrResultNr);
 
         ireader.close();

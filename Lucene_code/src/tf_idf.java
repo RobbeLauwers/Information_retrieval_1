@@ -28,6 +28,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class tf_idf {
+    public String validTF = "Snlb";
+    public String validIDF = "Sntp";
+    public String validNorm = "S";
     // S = standard (see https://github.com/apache/lucene/blob/main/lucene/core/src/java/org/apache/lucene/search/similarities/ClassicSimilarity.java)
     // Else according to table in slides
     public String tf = "S";
@@ -56,7 +59,20 @@ public class tf_idf {
         float temp = 0;
         if(Objects.equals(idf,"S")){
             temp = idf_default(docFreq,docCount);
-            //TODO
+        }else if(Objects.equals(idf,"n")){
+            temp = idf_n(docFreq,docCount);
+        }else if(Objects.equals(idf,"t")){
+            temp = idf_t(docFreq,docCount);
+        }else if(Objects.equals(idf,"p")){
+            temp = idf_p(docFreq,docCount);
+        }
+        return temp;
+    }
+
+    public float norm(int numTerms) {
+        float temp = 0;
+        if(Objects.equals(norm, "S")){
+            temp = norm_default(numTerms);
         }
         return temp;
     }
@@ -105,4 +121,8 @@ public class tf_idf {
         return (float) (Math.log((docCount + 1) / (double) (docFreq + 1)) + 1.0);
     }
 
+    // https://github.com/apache/lucene/blob/main/lucene/core/src/java/org/apache/lucene/search/similarities/ClassicSimilarity.java
+    public float norm_default(int numTerms) {
+        return (float) (1.0 / Math.sqrt(numTerms));
+    }
 }
