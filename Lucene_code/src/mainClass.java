@@ -262,6 +262,18 @@ public class mainClass {
         }
     }
 
+    public static void runAllOkapi25() throws IOException, ParseException {
+        for (int k1int = 100; k1int < 250; k1int += 5) {
+            float k1 = 1.0f * k1int / 100;
+            for (int bint = 20; bint < 100; bint += 5) {
+                    float  b = 1.0f * bint / 100;
+                    Similarity similarity = new BM25Similarity(k1, b);
+                    System.out.print("Okapi 25 using k1=" + k1 + " and b=" + b + "\n");
+                    fullSearch(similarity);
+            }
+        }
+    }
+
     public static void main(String[] args) throws IOException, ParseException {
 
         System.out.print("Using BM25\n");
@@ -269,6 +281,7 @@ public class mainClass {
         fullSearch(default_sim);
 
         runAllTF_IDF();
+        runAllOkapi25();
 
     }
 
