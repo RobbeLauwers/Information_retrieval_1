@@ -393,7 +393,7 @@ public class mainClass {
         System.out.print("Language model using Jelinek-Mercer smoothing, using lambda=" + 0.4 +  "\n");
         fullSearch(similarity2,similarity2,"LM_i" + 0.4);
 
-        INDEX_LOCATION_IF_ON_DISK = "./tmp/index3";
+        INDEX_LOCATION_IF_ON_DISK = "./tmp/index4";
 
         tf_idf TF_TEMP = new tf_idf();
         TF_TEMP.norm = "n";
