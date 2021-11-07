@@ -73,7 +73,7 @@ public class mainClass {
     }
 
     public static void set_big_real(){
-        DATASET_DIRECTORY_PATH = "./Datasets/Large/";
+        DATASET_DIRECTORY_PATH = "./Datasets/Large";
         QUERY_FILE_PATH = "./Queries/queries.csv";
         INDEX_LOCATION_IN_RAM = false;
         INDEX_LOCATION_IF_ON_DISK = "./tmp/indexReal";
