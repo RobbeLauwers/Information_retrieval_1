@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 public class tf_idf {
     public String validTF = "Snlb";
     public String validIDF = "Sntp";
-    public String validNorm = "S";
+    public String validNorm = "Sn";
     // S = standard (see https://github.com/apache/lucene/blob/main/lucene/core/src/java/org/apache/lucene/search/similarities/ClassicSimilarity.java)
     // Else according to table in slides
     public String tf = "S";
@@ -73,6 +73,8 @@ public class tf_idf {
         float temp = 0;
         if(Objects.equals(norm, "S")){
             temp = norm_default(numTerms);
+        }else if(Objects.equals(norm, "n")){
+            temp = norm_n(numTerms);
         }
         return temp;
     }
@@ -124,5 +126,8 @@ public class tf_idf {
     // https://github.com/apache/lucene/blob/main/lucene/core/src/java/org/apache/lucene/search/similarities/ClassicSimilarity.java
     public float norm_default(int numTerms) {
         return (float) (1.0 / Math.sqrt(numTerms));
+    }
+    public float norm_n(int numTerms) {
+        return (float) 1;
     }
 }

@@ -1,5 +1,6 @@
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.StopwordAnalyzerBase;
+import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.core.StopAnalyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
@@ -7,14 +8,17 @@ import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.StopFilter;
 import org.apache.lucene.analysis.core.SimpleAnalyzer;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.queryparser.xml.builders.SpanNearBuilder;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.similarities.*;
+import org.apache.lucene.search.spans.SpanNearQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.RAMDirectory;
@@ -48,6 +52,8 @@ public class mainClass {
     // Timers used to give progress updates, initial values set at start of indexing
     public static long startOfProgram;
     public static long TimeSincePrevIndex;
+
+    public static ArrayList<String[]> allResults = new ArrayList<>();
 
     // https://www.baeldung.com/java-csv
     // Helper function to write output
@@ -256,21 +262,92 @@ public class mainClass {
                         }
                     };
                     System.out.print("tf_idf using " + name + "." + name + "\n");
-                    fullSearch(similarity);
+                    fullSearch(similarity,similarity,"" + name + "." + name);
                 }
             }
         }
     }
 
-    public static void runAllOkapi25() throws IOException, ParseException {
-        for (int k1int = 100; k1int < 250; k1int += 5) {
+    public static void runAllOkapi25(float stepsize) throws IOException, ParseException {
+        for (int k1int = 100; k1int < 250; k1int += stepsize) {
             float k1 = 1.0f * k1int / 100;
-            for (int bint = 20; bint < 100; bint += 5) {
+            for (int bint = 20; bint < 100; bint += stepsize) {
                     float  b = 1.0f * bint / 100;
                     Similarity similarity = new BM25Similarity(k1, b);
                     System.out.print("Okapi 25 using k1=" + k1 + " and b=" + b + "\n");
-                    fullSearch(similarity);
+                    fullSearch(similarity,similarity,"Okapi_k" + k1 + "_b" + b);
             }
+        }
+    }
+
+    public static void runTF_IDF_Combinations(){
+        tf_idf TF_TEMP1 = new tf_idf();
+        TF_TEMP1.tf = "n";
+        TF_TEMP1.idf = "n";
+        TF_TEMP1.norm = "n";
+        Similarity similarity1 = new TFIDFSimilarity() {
+            @Override
+            public float tf(float v) {
+                return TF_TEMP1.tf(v);
+            }
+
+            @Override
+            public float idf(long l, long l1) {
+                return TF_TEMP1.idf(l,l1);
+            }
+
+            @Override
+            public float lengthNorm(int i) {
+                return TF_TEMP1.norm(i);
+            }
+
+            @Override
+            public float sloppyFreq(int i) {
+                return 0;
+            }
+
+            @Override
+            public float scorePayload(int i, int i1, int i2, BytesRef bytesRef) {
+                return 0;
+            }
+        };
+        tf_idf TF_TEMP2 = new tf_idf();
+        TF_TEMP2.tf = "n";
+        TF_TEMP2.idf = "n";
+        TF_TEMP2.norm = "n";
+        Similarity similarity2 = new TFIDFSimilarity() {
+            @Override
+            public float tf(float v) {
+                return TF_TEMP2.tf(v);
+            }
+
+            @Override
+            public float idf(long l, long l1) {
+                return TF_TEMP2.idf(l,l1);
+            }
+
+            @Override
+            public float lengthNorm(int i) {
+                return TF_TEMP2.norm(i);
+            }
+
+            @Override
+            public float sloppyFreq(int i) {
+                return 0;
+            }
+
+            @Override
+            public float scorePayload(int i, int i1, int i2, BytesRef bytesRef) {
+                return 0;
+            }
+        };
+    }
+
+    public static void runAllLM(float stepsize) throws IOException, ParseException {
+        for (float i =0; i <= 1; i+=stepsize){
+            Similarity similarity = new LMJelinekMercerSimilarity(i);
+            System.out.print("Language model using Jelinek-Mercer smoothing, using lambda=" + i +  "\n");
+            fullSearch(similarity,similarity,"LM_i" + i);
         }
     }
 
@@ -278,14 +355,17 @@ public class mainClass {
 
         System.out.print("Using BM25\n");
         Similarity default_sim = new BM25Similarity();
-        fullSearch(default_sim);
 
+        fullSearch(default_sim,default_sim,"BM25");
         runAllTF_IDF();
-        runAllOkapi25();
+        runTF_IDF_Combinations();
+        runAllOkapi25(10);
+        runAllLM((float) 0.2);
 
+        givenDataArray_whenConvertToCSV_thenOutputCreated("./SmallResultsCSV.csv",allResults);
     }
 
-    public static void fullSearch(Similarity similarity) throws IOException, ParseException {
+    public static void fullSearch(Similarity similarityIndex,Similarity similarityQuery,String name) throws IOException, ParseException {
 
 
         Directory directory;
@@ -305,7 +385,7 @@ public class mainClass {
         // We want the index to be constructed using the analyzer defined above
         IndexWriterConfig config = new IndexWriterConfig(analyzer);
 
-        config.setSimilarity(similarity);
+        config.setSimilarity(similarityIndex);
 
         // We tell the index writer where to write to (directory) and give it additional settings like ignoring stop words (config)
         IndexWriter iwriter = new IndexWriter(directory, config);
@@ -322,8 +402,7 @@ public class mainClass {
         // We want to search in the index we just read
         IndexSearcher isearcher = new IndexSearcher(ireader);
 
-        // TODO
-        isearcher.setSimilarity(similarity);
+        isearcher.setSimilarity(similarityQuery);
 
         // read query file from path
         File queryFile = new File(QUERY_FILE_PATH);
@@ -335,7 +414,6 @@ public class mainClass {
         // Currently, we use the same analyzer that was used to create the index (remove/keep stop words from query, etc), probably possible to use a different one
         QueryParser parser = new QueryParser("file_content", analyzer);
         parser.setSplitOnWhitespace(true);
-
 
         //Used to give progress updates during querying
         int counter = 0;
@@ -350,8 +428,10 @@ public class mainClass {
             // Apply analyzer to query, removing stop words etc depending on analyzer settings
             // QueryParser.escape Changes special characters so that they do not crash the query
             // https://stackoverflow.com/a/10259944
-            // TODO: using QueryParser.escape strongly increases the amount of results, should this happen?
-            Query query = parser.parse(QueryParser.escape(queryRow[1]));
+            Query query;
+
+            query = parser.parse(QueryParser.escape(queryRow[1]));
+
 
             // Show progress
 //            counter += 1;
@@ -376,8 +456,9 @@ public class mainClass {
             }
         }
 
+        int error = 0;
         if(COMPARE_RESULTS_TO_EXAMPLE){
-            compareResults(QueryNrResultNr,false);
+            error = compareResults(QueryNrResultNr,false);
         }
 
         // Write output
@@ -388,5 +469,6 @@ public class mainClass {
         ireader.close();
         directory.close();
 
+        allResults.add(new String[]{name, String.valueOf(error)});
     }
 }
