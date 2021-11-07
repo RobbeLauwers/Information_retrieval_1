@@ -48,6 +48,19 @@ public class mainClass {
     static int LIMIT_SEARCH_RESULT_PER_QUERY = 1;
     static Boolean COMPARE_RESULTS_TO_EXAMPLE = true;
     static String EXAMPLE_PATH = "./Queries/dev_query_results_small.csv";
+    static String TEST_OUTPUT_PATH = "./comparison.csv";
+    static Boolean STORE_TIME = false;
+
+
+    public static void set_big_test(){
+        DATASET_DIRECTORY_PATH = "./Datasets/Large/full_docs/full_docs";
+        QUERY_FILE_PATH = "./Queries/dev_queries.tsv";
+        INDEX_LOCATION_IN_RAM = false;
+        INDEX_LOCATION_IF_ON_DISK = "./tmp/index";
+        LIMIT_SEARCH_RESULT_PER_QUERY = 20;
+        EXAMPLE_PATH = "./Queries/dev_query_results";
+        STORE_TIME = true;
+    }
 
     // Timers used to give progress updates, initial values set at start of indexing
     public static long startOfProgram;
@@ -162,7 +175,6 @@ public class mainClass {
         return Data;
     }
 
-    // TODO: expand for big dataset
     public static int compareResults(ArrayList<String[]> results, Boolean resultNotInExample){
         //Reads example results from csv
         ArrayList<String[]> example = tsvr(new File(EXAMPLE_PATH),true);
@@ -351,8 +363,7 @@ public class mainClass {
         }
     }
 
-    public static void main(String[] args) throws IOException, ParseException {
-
+    public static void testSmall() throws IOException, ParseException {
         System.out.print("Using BM25\n");
         Similarity default_sim = new BM25Similarity();
 
@@ -363,6 +374,67 @@ public class mainClass {
         runAllLM((float) 0.2);
 
         givenDataArray_whenConvertToCSV_thenOutputCreated("./SmallResultsCSV.csv",allResults);
+    }
+
+    public static void run_best_of_each() throws IOException, ParseException {
+        System.out.print("Using BM25\n");
+        Similarity default_sim = new BM25Similarity();
+        fullSearch(default_sim,default_sim,"BM25");
+
+        INDEX_LOCATION_IF_ON_DISK = "./tmp/index2";
+
+        Similarity similarity = new BM25Similarity((float)1.9, (float)0.5);
+        System.out.print("Okapi 25 using k1=" + 1.9 + " and b=" + 0.5 + "\n");
+        fullSearch(similarity,similarity,"Okapi_k" + 1.9 + "_b" + 0.5);
+
+        INDEX_LOCATION_IF_ON_DISK = "./tmp/index3";
+
+        Similarity similarity2 = new LMJelinekMercerSimilarity((float)0.4);
+        System.out.print("Language model using Jelinek-Mercer smoothing, using lambda=" + 0.4 +  "\n");
+        fullSearch(similarity2,similarity2,"LM_i" + 0.4);
+
+        INDEX_LOCATION_IF_ON_DISK = "./tmp/index3";
+
+        tf_idf TF_TEMP = new tf_idf();
+        TF_TEMP.norm = "n";
+        TF_TEMP.idf = "p";
+        TF_TEMP.tf = "l";
+        Similarity similarity3 = new TFIDFSimilarity() {
+            @Override
+            public float tf(float v) {
+                return TF_TEMP.tf(v);
+            }
+
+            @Override
+            public float idf(long l, long l1) {
+                return TF_TEMP.idf(l,l1);
+            }
+
+            @Override
+            public float lengthNorm(int i) {
+                return TF_TEMP.norm(i);
+            }
+
+            @Override
+            public float sloppyFreq(int i) {
+                return 0;
+            }
+
+            @Override
+            public float scorePayload(int i, int i1, int i2, BytesRef bytesRef) {
+                return 0;
+            }
+        };
+        System.out.print("tf_idf using " + "npl" + "." + "npl" + "\n");
+        fullSearch(similarity,similarity,"" + "npl" + "." + "npl");
+        givenDataArray_whenConvertToCSV_thenOutputCreated("./comparisons.csv",allResults);
+
+    }
+
+    public static void main(String[] args) throws IOException, ParseException {
+        testSmall();
+//        set_big_test();
+//        run_best_of_each();
     }
 
     public static void fullSearch(Similarity similarityIndex,Similarity similarityQuery,String name) throws IOException, ParseException {
@@ -394,6 +466,7 @@ public class mainClass {
         // Indexing finished -> close index writer
         iwriter.close();
 
+        long indexingTime = -startOfProgram + System.currentTimeMillis();
         System.out.print("Indexing took " + (-startOfProgram + System.currentTimeMillis() + "\n"));
 
         // Now search the index:
@@ -464,11 +537,16 @@ public class mainClass {
         // Write output
         //System.out.print("Output written to ./result.csv\n");
         System.out.print("\n");
-        givenDataArray_whenConvertToCSV_thenOutputCreated("./result.csv",QueryNrResultNr);
+        givenDataArray_whenConvertToCSV_thenOutputCreated(TEST_OUTPUT_PATH,QueryNrResultNr);
 
         ireader.close();
         directory.close();
 
-        allResults.add(new String[]{name, String.valueOf(error)});
+        if(STORE_TIME){
+            allResults.add(new String[]{name, String.valueOf(error), String.valueOf(indexingTime)});
+        }else{
+            allResults.add(new String[]{name, String.valueOf(error)});
+        }
+
     }
 }
