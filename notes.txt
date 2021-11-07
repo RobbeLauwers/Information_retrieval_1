@@ -46,7 +46,7 @@ Language model using Jelinek-Mercer smoothing, using lambda=0.4
 Indexing took 1266855
 There are 27017 example query results that do not show up in the results
 
-? Using wrong limit ?
+! using wrong limit, but shows that indexing speed on laptop/desktop was not camparable
 Desktop
 Using BM25
 Indexing took 1117052
