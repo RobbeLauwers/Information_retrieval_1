@@ -41,31 +41,44 @@ public class mainClass {
     // If you want the path to be relative to root directory, remember to use ./ at the start
     //TODO: give these as actual arguments rather than hardcoded?
     static String DATASET_DIRECTORY_PATH = "./Datasets/Small";
+    //Path to file containing queries
     static String QUERY_FILE_PATH = "./Queries/dev_small_queries.tsv";
+    //Is the query file csv? tsv is assumed if false
     static Boolean QUERY_IS_CSV = false;
+    //Store index in ram if true, on disk if false. Recommended true for small, false for large dataset
     static Boolean INDEX_LOCATION_IN_RAM = true;
+    //Where should index be stored if on disk?
     static String INDEX_LOCATION_IF_ON_DISK = "./tmp/testindex2";
+    //Max results that a query can return
     static int LIMIT_SEARCH_RESULT_PER_QUERY = 30;
+    //Is there a file containing example results?
     static Boolean COMPARE_RESULTS_TO_EXAMPLE = true;
+    //If above is true, where is it?
     static String EXAMPLE_PATH = "./Queries/dev_query_results_small.csv";
+    //Where should query results be written?
     static String TEST_OUTPUT_PATH = "./comparison.csv";
+    //Should time to index be stored in results?
     static Boolean STORE_TIME = false;
 
 
+    //Set above variables to be suitable fr big dataset
     public static void set_big_test(){
         DATASET_DIRECTORY_PATH = "./Datasets/Large/full_docs/full_docs";
         QUERY_FILE_PATH = "./Queries/dev_queries.tsv";
         INDEX_LOCATION_IN_RAM = false;
         INDEX_LOCATION_IF_ON_DISK = "./tmp/index";
-        LIMIT_SEARCH_RESULT_PER_QUERY = 20;
+        LIMIT_SEARCH_RESULT_PER_QUERY = 30;
         EXAMPLE_PATH = "./Queries/dev_query_results.csv";
         STORE_TIME = true;
     }
 
     // Timers used to give progress updates, initial values set at start of indexing
+    //Set at start of indexing, never changes
     public static long startOfProgram;
+    //Set after every 10000 documents indexed
     public static long TimeSincePrevIndex;
 
+    //Keep stats about all tested
     public static ArrayList<String[]> allResults = new ArrayList<>();
 
     // https://www.baeldung.com/java-csv
@@ -152,7 +165,6 @@ public class mainClass {
     // Parse .tsv files (queries)
     // Return format: data.get(x) gets row x, data.get(x)[0] gets query number, data.get(x)[1] gets query
     // https://stackoverflow.com/a/61443651
-    // TODO: make tsvr itself check the file extension instead of giving as argument
     public static ArrayList<String[]> tsvr(File test2, Boolean csv) {
         ArrayList<String[]> Data = new ArrayList<>(); //initializing a new ArrayList out of String[]'s
         try (BufferedReader TSVReader = new BufferedReader(new FileReader(test2))) {
@@ -198,19 +210,22 @@ public class mainClass {
                 }
             }
             int error2 = 0;
+            //For each query/document combination in our results
             for (String[] row : results){
                 if(!mapExample.containsKey(row[0])){
                     error2 += 1;
                     continue;
                 }
+                //Check if same query in example has the same result
                 if(!mapExample.get(row[0]).contains(row[1])){
+                    //If not, count as error
                     error2 += 1;
                 }
             }
             errors = error2;
             System.out.print("There are " + error2 + " actual query results that do not show up in the examples\n");
         }else{
-            //same as above, but for actual results
+            //same as above, but example and actual results swapped
             HashMap<String, ArrayList<String>> mapResult = new HashMap<>();
             for (String[] row : results){
                 if(!mapResult.containsKey(row[0])){
@@ -237,16 +252,22 @@ public class mainClass {
         return errors;
     }
 
+    //Run all implemented tf_idf variations
     public static void runAllTF_IDF() throws IOException, ParseException {
+        //Instantiate object that contains tf_idf functions
         tf_idf TF_TEMP = new tf_idf();
         // https://www.techiedelight.com/iterate-over-characters-string-java/
+        //For each idf implementation
         for (int idf_int = 0; idf_int < TF_TEMP.validIDF.length(); idf_int++) {
             TF_TEMP.idf = String.valueOf(TF_TEMP.validIDF.charAt(idf_int));
+            //For each tf implementation
             for (int tf_int = 0; tf_int < TF_TEMP.validTF.length(); tf_int++) {
                 TF_TEMP.tf = String.valueOf(TF_TEMP.validTF.charAt(tf_int));
+                //for each norm implementation
                 for (int norm_int = 0; norm_int < TF_TEMP.validNorm.length(); norm_int++) {
                     TF_TEMP.norm = String.valueOf(TF_TEMP.validNorm.charAt(norm_int));
                     String name =  TF_TEMP.tf + TF_TEMP.idf + TF_TEMP.norm;
+                    //create similarity with functions set above
                     Similarity similarity = new TFIDFSimilarity() {
                         @Override
                         public float tf(float v) {
@@ -274,6 +295,7 @@ public class mainClass {
                         }
                     };
                     System.out.print("tf_idf using " + name + "." + name + "\n");
+                    //Actually do search
                     fullSearch(similarity,similarity,"" + name + "." + name);
                 }
             }
@@ -432,9 +454,12 @@ public class mainClass {
     }
 
     public static void main(String[] args) throws IOException, ParseException {
-        testSmall();
-        //set_big_test();
-        //run_best_of_each();
+
+
+
+        //testSmall();
+        set_big_test();
+        run_best_of_each();
     }
 
     public static void fullSearch(Similarity similarityIndex,Similarity similarityQuery,String name) throws IOException, ParseException {
