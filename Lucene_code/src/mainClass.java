@@ -45,7 +45,7 @@ public class mainClass {
     static Boolean QUERY_IS_CSV = false;
     static Boolean INDEX_LOCATION_IN_RAM = true;
     static String INDEX_LOCATION_IF_ON_DISK = "./tmp/testindex2";
-    static int LIMIT_SEARCH_RESULT_PER_QUERY = 1;
+    static int LIMIT_SEARCH_RESULT_PER_QUERY = 30;
     static Boolean COMPARE_RESULTS_TO_EXAMPLE = true;
     static String EXAMPLE_PATH = "./Queries/dev_query_results_small.csv";
     static String TEST_OUTPUT_PATH = "./comparison.csv";
@@ -58,7 +58,7 @@ public class mainClass {
         INDEX_LOCATION_IN_RAM = false;
         INDEX_LOCATION_IF_ON_DISK = "./tmp/index";
         LIMIT_SEARCH_RESULT_PER_QUERY = 20;
-        EXAMPLE_PATH = "./Queries/dev_query_results";
+        EXAMPLE_PATH = "./Queries/dev_query_results.csv";
         STORE_TIME = true;
     }
 
@@ -426,15 +426,15 @@ public class mainClass {
             }
         };
         System.out.print("tf_idf using " + "npl" + "." + "npl" + "\n");
-        fullSearch(similarity,similarity,"" + "npl" + "." + "npl");
+        fullSearch(similarity3,similarity3,"" + "npl" + "." + "npl");
         givenDataArray_whenConvertToCSV_thenOutputCreated("./comparisons.csv",allResults);
 
     }
 
     public static void main(String[] args) throws IOException, ParseException {
         testSmall();
-//        set_big_test();
-//        run_best_of_each();
+        //set_big_test();
+        //run_best_of_each();
     }
 
     public static void fullSearch(Similarity similarityIndex,Similarity similarityQuery,String name) throws IOException, ParseException {
