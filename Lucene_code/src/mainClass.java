@@ -63,13 +63,24 @@ public class mainClass {
 
     //Set above variables to be suitable fr big dataset
     public static void set_big_test(){
-        DATASET_DIRECTORY_PATH = "./Datasets/Large/full_docs/full_docs";
+        DATASET_DIRECTORY_PATH = "./Datasets/Large";
         QUERY_FILE_PATH = "./Queries/dev_queries.tsv";
         INDEX_LOCATION_IN_RAM = false;
         INDEX_LOCATION_IF_ON_DISK = "./tmp/index";
         LIMIT_SEARCH_RESULT_PER_QUERY = 30;
         EXAMPLE_PATH = "./Queries/dev_query_results.csv";
         STORE_TIME = true;
+    }
+
+    public static void set_big_real(){
+        DATASET_DIRECTORY_PATH = "./Datasets/Large/";
+        QUERY_FILE_PATH = "./Queries/queries.csv";
+        INDEX_LOCATION_IN_RAM = false;
+        INDEX_LOCATION_IF_ON_DISK = "./tmp/indexReal";
+        LIMIT_SEARCH_RESULT_PER_QUERY = 10;
+        QUERY_IS_CSV = false;
+        STORE_TIME = true;
+        COMPARE_RESULTS_TO_EXAMPLE = false;
     }
 
     // Timers used to give progress updates, initial values set at start of indexing
@@ -119,10 +130,10 @@ public class mainClass {
                             String content = "";
 
                             //TODO keep for large dataset
-//                            if (iwriter.numDocs()%10000 == 0){
-//                                System.out.print("Indexed " + iwriter.numDocs() + " files, time since last update: " + (-TimeSincePrevIndex +System.currentTimeMillis()) + "\n");
-//                                TimeSincePrevIndex = System.currentTimeMillis();
-//                            }
+                            if (iwriter.numDocs()%10000 == 0){
+                                System.out.print("Indexed " + iwriter.numDocs() + " files, time since last update: " + (-TimeSincePrevIndex +System.currentTimeMillis()) + "\n");
+                                TimeSincePrevIndex = System.currentTimeMillis();
+                            }
 
                             // Exception handling seems to be mandatory?
                             try {
@@ -455,11 +466,14 @@ public class mainClass {
 
     public static void main(String[] args) throws IOException, ParseException {
 
-
+        set_big_real();
+        Similarity similarity = new BM25Similarity((float)1.9, (float)0.5);
+        System.out.print("Okapi 25 using k1=" + 1.9 + " and b=" + 0.5 + "\n");
+        fullSearch(similarity,similarity,"Okapi_k" + 1.9 + "_b" + 0.5);
 
         //testSmall();
-        set_big_test();
-        run_best_of_each();
+        //set_big_test();
+        //run_best_of_each();
     }
 
     public static void fullSearch(Similarity similarityIndex,Similarity similarityQuery,String name) throws IOException, ParseException {
