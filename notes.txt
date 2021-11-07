@@ -12,6 +12,42 @@ Looking at https://lucene.apache.org/core/6_1_0/core/org/apache/lucene/document/
 
 Query parsing: https://lucene.apache.org/core/7_3_0/queryparser/org/apache/lucene/queryparser/classic/QueryParser.html: queries are natural language, and separate queries are given. Most functionality not needed
 
-Big dataset tests:
-    example results: 80544
-    queries: 5194
+Queries in example: 5194
+Results in example: 80544
+Results in our implementation: 155791
+
+results/query
+	example: 15.5
+	tf_idf npl.npl: implementation: 30 -> probably same for all methods
+
+
+Desktop
+Okapi 25 using k1=1.9 and b=0.5
+Indexing took 1095265
+There are 22206 example query results that do not show up in the results
+
+Laptop
+Using BM25
+Indexing took 1611554
+There are 25581 example query results that do not show up in the results
+
+desktop
+tf_idf using npl.npl
+Indexing took 1300889
+There are 46778 example query results that do not show up in the results
+
+laptop
+tf_idf using npl.npl
+Indexing took 1639866
+There are 46774 example query results that do not show up in the results
+
+desktop
+Language model using Jelinek-Mercer smoothing, using lambda=0.4
+Indexing took 1266855
+There are 27017 example query results that do not show up in the results
+
+? Using wrong limit ?
+Desktop
+Using BM25
+Indexing took 1117052
+There are 25581 example query results that do not show up in the results
