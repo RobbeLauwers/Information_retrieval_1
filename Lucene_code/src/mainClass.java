@@ -326,69 +326,6 @@ public class mainClass {
         }
     }
 
-    public static void runTF_IDF_Combinations(){
-        tf_idf TF_TEMP1 = new tf_idf();
-        TF_TEMP1.tf = "n";
-        TF_TEMP1.idf = "n";
-        TF_TEMP1.norm = "n";
-        Similarity similarity1 = new TFIDFSimilarity() {
-            @Override
-            public float tf(float v) {
-                return TF_TEMP1.tf(v);
-            }
-
-            @Override
-            public float idf(long l, long l1) {
-                return TF_TEMP1.idf(l,l1);
-            }
-
-            @Override
-            public float lengthNorm(int i) {
-                return TF_TEMP1.norm(i);
-            }
-
-            @Override
-            public float sloppyFreq(int i) {
-                return 0;
-            }
-
-            @Override
-            public float scorePayload(int i, int i1, int i2, BytesRef bytesRef) {
-                return 0;
-            }
-        };
-        tf_idf TF_TEMP2 = new tf_idf();
-        TF_TEMP2.tf = "n";
-        TF_TEMP2.idf = "n";
-        TF_TEMP2.norm = "n";
-        Similarity similarity2 = new TFIDFSimilarity() {
-            @Override
-            public float tf(float v) {
-                return TF_TEMP2.tf(v);
-            }
-
-            @Override
-            public float idf(long l, long l1) {
-                return TF_TEMP2.idf(l,l1);
-            }
-
-            @Override
-            public float lengthNorm(int i) {
-                return TF_TEMP2.norm(i);
-            }
-
-            @Override
-            public float sloppyFreq(int i) {
-                return 0;
-            }
-
-            @Override
-            public float scorePayload(int i, int i1, int i2, BytesRef bytesRef) {
-                return 0;
-            }
-        };
-    }
-
     public static void runAllLM(float stepsize) throws IOException, ParseException {
         for (float i =0; i <= 1; i+=stepsize){
             Similarity similarity = new LMJelinekMercerSimilarity(i);
@@ -403,7 +340,6 @@ public class mainClass {
 
         fullSearch(default_sim,default_sim,"BM25");
         runAllTF_IDF();
-        runTF_IDF_Combinations();
         runAllOkapi25(10);
         runAllLM((float) 0.2);
 
