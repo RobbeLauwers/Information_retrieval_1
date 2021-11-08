@@ -101,7 +101,7 @@ public class tf_idf {
         return 1;
     }
     public float tf_default(float freq){
-        // https://github.com/apache/lucene/blob/main/lucene/core/src/java/org/apache/lucene/search/similarities/ClassicSimilarity.java
+        // https://github.com/apache/lucene/blob/main/lucene/core/src/java/org/apache/lucene/search/similarities/ClassicSimilarity.java by the Apache Software Foundation
         return (float) Math.sqrt(freq);
     }
 
@@ -119,11 +119,11 @@ public class tf_idf {
         return temp;
     }
     public float idf_default(long docFreq, long docCount){
-        // https://github.com/apache/lucene/blob/main/lucene/core/src/java/org/apache/lucene/search/similarities/ClassicSimilarity.java
+        // https://github.com/apache/lucene/blob/main/lucene/core/src/java/org/apache/lucene/search/similarities/ClassicSimilarity.java by the Apache Software Foundation
         return (float) (Math.log((docCount + 1) / (double) (docFreq + 1)) + 1.0);
     }
 
-    // https://github.com/apache/lucene/blob/main/lucene/core/src/java/org/apache/lucene/search/similarities/ClassicSimilarity.java
+    // https://github.com/apache/lucene/blob/main/lucene/core/src/java/org/apache/lucene/search/similarities/ClassicSimilarity.java by the Apache Software Foundation
     public float norm_default(int numTerms) {
         return (float) (1.0 / Math.sqrt(numTerms));
     }
