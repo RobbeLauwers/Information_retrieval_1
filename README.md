@@ -13,7 +13,7 @@ The code contains several hardcoded paths,
 so the program should always be used from this project root.
 
 
-##Usage
+## Usage
 
 Running mainClass.main() will run the main set of queries. If you want to recreate the results of the test queries, 
 you should instead call testSmall() for the small dataset or run_best_of_each() for the large 
