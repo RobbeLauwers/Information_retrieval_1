@@ -35,7 +35,8 @@ import java.util.stream.Stream;
 // Only use import below if junit is actually installed, might not be useful
 // import static org.junit.Assert.assertEquals;
 
-// https://lucene.apache.org/core/7_3_1/core/index.html
+// Starting point for this class was from https://lucene.apache.org/core/7_3_1/core/index.html,
+// by Apache software foundation
 // TODO: split up indexing/reading queries/querying into separate classes/files?
 public class mainClass {
     // If you want the path to be relative to root directory, remember to use ./ at the start
@@ -92,13 +93,13 @@ public class mainClass {
     //Keep stats about all tested
     public static ArrayList<String[]> allResults = new ArrayList<>();
 
-    // https://www.baeldung.com/java-csv
+    // https://www.baeldung.com/java-csv by multiple authors
     // Helper function to write output
     public static String convertToCSV(String[] data) {
         return String.join(",", data);
     }
 
-    // https://www.baeldung.com/java-csv
+    // https://www.baeldung.com/java-csv by multiple authors
     // prints output to csv
     public static void givenDataArray_whenConvertToCSV_thenOutputCreated(String CSV_FILE_NAME, ArrayList<String[]> dataLines) throws IOException {
         File csvOutputFile = new File(CSV_FILE_NAME);
@@ -109,7 +110,7 @@ public class mainClass {
         }
     }
 
-    // https://zetcode.com/java/listdirectory/
+    // https://zetcode.com/java/listdirectory/ by Jan Bodnar
     // Indexes all documents
     public static void readFiles(IndexWriter iwriter, String datasetDir) throws IOException {
 
@@ -123,7 +124,7 @@ public class mainClass {
                 .forEach(path -> {
                             //Create a new document to index
                             Document doc = new Document();
-                            // https://stackoverflow.com/a/4030936
+                            // https://stackoverflow.com/a/4030936 by stackoverflow user codaddict
                             // Get file number from file path, store it in the document
                             doc.add(new Field("file_number", path.toString().replaceAll("\\D+", ""), TextField.TYPE_STORED));
                             // Initialize file contents
@@ -139,10 +140,10 @@ public class mainClass {
                             try {
                                 // Get file from path
                                 File tempFile = path.toFile();
-                                // https://stackoverflow.com/a/15253450
+                                // https://stackoverflow.com/a/15253450 by Stackoverflow user Egor
                                 // Check if file is actually a file containing data, the datasets provided also include non-data files (like write.lock)
                                 if (tempFile.length() > 0 && path.toString().substring(path.toString().length() - 3).equals("txt")) {
-                                    // https://stackoverflow.com/a/3403112
+                                    // https://stackoverflow.com/a/3403112 by STackoverflow user polygenelubricants
                                     // Read contents from file
                                     content = new Scanner(tempFile).useDelimiter("\\Z").next();
                                 }
@@ -175,7 +176,7 @@ public class mainClass {
 
     // Parse .tsv files (queries)
     // Return format: data.get(x) gets row x, data.get(x)[0] gets query number, data.get(x)[1] gets query
-    // https://stackoverflow.com/a/61443651
+    // https://stackoverflow.com/a/61443651, by Stackoverflow user Germano Mosconi
     public static ArrayList<String[]> tsvr(File test2, Boolean csv) {
         ArrayList<String[]> Data = new ArrayList<>(); //initializing a new ArrayList out of String[]'s
         try (BufferedReader TSVReader = new BufferedReader(new FileReader(test2))) {
@@ -539,7 +540,7 @@ public class mainClass {
         for ( String[] queryRow : queries){
             // Apply analyzer to query, removing stop words etc depending on analyzer settings
             // QueryParser.escape Changes special characters so that they do not crash the query
-            // https://stackoverflow.com/a/10259944
+            // https://stackoverflow.com/a/10259944 ,by Stackoverflow user Pau Kiat Wee
             Query query;
 
             query = parser.parse(QueryParser.escape(queryRow[1]));
