@@ -1,27 +1,30 @@
 # Information Retrievel Assignment 1
 
-## Usage
+## Installation
 
-First, go to the top of the main class and change the all-caps variables to use the correct data/directories
-(dataset not included in the git repository, not sure if it has to be included here? Large dataset will be
-1.4 GB compressed, seemed too large to include)
-
-
-
-results will always be written to root folder as result.csv. If you want to keep old results, make sure to copy the old file.
+The datasets are not included on git, and their text files manually have to be placed in ./Datasets/Small for the small 
+dataset and ./Datasets/Large for the large dataset. The query files from the assignment are included on git.
 
 Make sure Lucene is added to the project before running. Version
-[7_3_1](https://archive.apache.org/dist/lucene/java/7.3.1/) is used (7.3.0 probably fine too?) The jar files needed are core, queryParser and
-misc (Should the lucene jars be included on github?)
+[7_3_1](https://archive.apache.org/dist/lucene/java/7.3.1/) is used. The jar files needed are core, queries, queryParser and
+misc.
 
-Adding jars using intelliJ:
+The code contains several hardcoded paths,
+so the program should always be used from this project root.
 
-- Top left -> File
-- Project Structure
-- left sidebar: Modules
-- Select Lucene_code in the middle column
-- On the right, select dependencies
-- Look for a +
-- JARs or directories
-- Select needed jar files
 
+##Usage
+
+Running mainClass.main() will run the main set of queries. If you want to recreate the results of the test queries, 
+you should instead call testSmall() for the small dataset or run_best_of_each() for the large 
+dataset. Indexing the large dataset can take up to 30 
+minutes, and the large test runs 4 models, so be aware that this can take some time.
+
+Query output will be written to result.csv (this will overwrite the existing file if one exists). 
+If either of the tests with example results is used, an additional file comparisons.csv is generated (or overwritten). 
+This contains two columns: the left one has the name of the model, the right one has the amount of unmatched files as 
+described in 
+the report.
+
+Running the tests should not be necessary, as the test results for the small dataset are provided in SmallResultsCSV.csv
+and results for the large dataset are included in the report.

@@ -37,10 +37,8 @@ import java.util.stream.Stream;
 
 // Starting point for this class was from https://lucene.apache.org/core/7_3_1/core/index.html,
 // by Apache software foundation
-// TODO: split up indexing/reading queries/querying into separate classes/files?
 public class mainClass {
     // If you want the path to be relative to root directory, remember to use ./ at the start
-    //TODO: give these as actual arguments rather than hardcoded?
     static String DATASET_DIRECTORY_PATH = "./Datasets/Small";
     //Path to file containing queries
     static String QUERY_FILE_PATH = "./Queries/dev_small_queries.tsv";
@@ -51,18 +49,18 @@ public class mainClass {
     //Where should index be stored if on disk?
     static String INDEX_LOCATION_IF_ON_DISK = "./tmp/testindex2";
     //Max results that a query can return
-    static int LIMIT_SEARCH_RESULT_PER_QUERY = 30;
+    static int LIMIT_SEARCH_RESULT_PER_QUERY = 1;
     //Is there a file containing example results?
     static Boolean COMPARE_RESULTS_TO_EXAMPLE = true;
     //If above is true, where is it?
     static String EXAMPLE_PATH = "./Queries/dev_query_results_small.csv";
     //Where should query results be written?
-    static String TEST_OUTPUT_PATH = "./comparison.csv";
+    static String TEST_OUTPUT_PATH = "./result.csv";
     //Should time to index be stored in results?
     static Boolean STORE_TIME = false;
 
 
-    //Set above variables to be suitable fr big dataset
+    //Set above variables to be suitable for big dataset + comparison with example results
     public static void set_big_test(){
         DATASET_DIRECTORY_PATH = "./Datasets/Large";
         QUERY_FILE_PATH = "./Queries/dev_queries.tsv";
@@ -130,7 +128,6 @@ public class mainClass {
                             // Initialize file contents
                             String content = "";
 
-                            //TODO keep for large dataset
                             if (iwriter.numDocs()%10000 == 0){
                                 System.out.print("Indexed " + iwriter.numDocs() + " files, time since last update: " + (-TimeSincePrevIndex +System.currentTimeMillis()) + "\n");
                                 TimeSincePrevIndex = System.currentTimeMillis();
@@ -314,6 +311,7 @@ public class mainClass {
         }
     }
 
+    //Run Okapi25BM with several parameters
     public static void runAllOkapi25(float stepsize) throws IOException, ParseException {
         for (int k1int = 100; k1int < 250; k1int += stepsize) {
             float k1 = 1.0f * k1int / 100;
@@ -326,6 +324,7 @@ public class mainClass {
         }
     }
 
+    //Run Language model with Jelinek-Mercer smoothing with several parameters
     public static void runAllLM(float stepsize) throws IOException, ParseException {
         for (float i =0; i <= 1; i+=stepsize){
             Similarity similarity = new LMJelinekMercerSimilarity(i);
@@ -334,6 +333,7 @@ public class mainClass {
         }
     }
 
+    //Runs all implemented Similarities on the small dataset.
     public static void testSmall() throws IOException, ParseException {
         System.out.print("Using BM25\n");
         Similarity default_sim = new BM25Similarity();
@@ -346,7 +346,9 @@ public class mainClass {
         givenDataArray_whenConvertToCSV_thenOutputCreated("./SmallResultsCSV.csv",allResults);
     }
 
+    //Runs best results from small dataset on large dataset.
     public static void run_best_of_each() throws IOException, ParseException {
+        set_big_test();
         System.out.print("Using BM25\n");
         Similarity default_sim = new BM25Similarity();
         fullSearch(default_sim,default_sim,"BM25");
@@ -401,30 +403,30 @@ public class mainClass {
 
     }
 
-    public static void main(String[] args) throws IOException, ParseException {
-
+    //Run main set of queries, do not compare to results.
+    public static void run_main_queries() throws IOException, ParseException {
         set_big_real();
         Similarity similarity = new BM25Similarity((float)1.9, (float)0.5);
         System.out.print("Okapi 25 using k1=" + 1.9 + " and b=" + 0.5 + "\n");
         fullSearch(similarity,similarity,"Okapi_k" + 1.9 + "_b" + 0.5);
+    }
 
+    public static void main(String[] args) throws IOException, ParseException {
         //testSmall();
-        //set_big_test();
         //run_best_of_each();
+        run_main_queries();
     }
 
     public static void fullSearch(Similarity similarityIndex,Similarity similarityQuery,String name) throws IOException, ParseException {
-
 
         Directory directory;
         // Store the index in memory:
         if(INDEX_LOCATION_IN_RAM){
             directory = new RAMDirectory();
         }else{
+            //Or store on disk
             directory = FSDirectory.open(Paths.get(INDEX_LOCATION_IF_ON_DISK));
         }
-
-        // TODO: move the analyzer/index definitions below to the indexing() method?
 
         // https://lucene.apache.org/core/7_3_1/core/index.html
         // "Filters StandardTokenizer with StandardFilter, LowerCaseFilter and StopFilter, using a list of English stop words."
@@ -456,7 +458,6 @@ public class mainClass {
         // read query file from path
         File queryFile = new File(QUERY_FILE_PATH);
         // Parse queries: queries.get(x) gets row x, queries.get(x)[0] gets query number, queries.get(x)[1] gets query
-        //TODO: make tsvr itself check the file extension
         ArrayList<String[]> queries = tsvr(queryFile,QUERY_IS_CSV);
 
         // "file_content" is the name of the field we want to search. It is defined like this during index creation (see method readFiles)
